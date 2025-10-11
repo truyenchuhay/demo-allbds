@@ -10,6 +10,7 @@ const r2Client = new S3Client({
     },
 });
 
+export const dynamic = "force-dynamic"; // Next.js 14 App Router
 
 export async function GET(_req: NextRequest, ctx: RouteContext<'/data/content-projects/[slug]'>) {
     const { slug } = await ctx.params
@@ -34,7 +35,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<'/data/content-pr
                 ? await response.Body.transformToArrayBuffer()
                 : await new Response(response.Body as any).arrayBuffer();
 
-        // Lấy metadata từ response
+        // Lấy metadata từ R2
         const headers = new Headers({
             "Content-Type": response.ContentType || "application/octet-stream",
             "Content-Length": response.ContentLength?.toString() || arrayBuffer.byteLength.toString(),
@@ -45,6 +46,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<'/data/content-pr
 
         return new NextResponse(arrayBuffer, { status: 200, headers });
     } catch (err) {
+        console.error(err);
         return new NextResponse(null, { status: 404 });
     }
 }   
