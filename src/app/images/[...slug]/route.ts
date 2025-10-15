@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { slug: string[] } } // 'slug' là một mảng string do sử dụng [...slug]
+    { params }: { params: Promise<{ slug: string[] }> } // 'slug' là một mảng string do sử dụng [...slug]
 ) {
     // 1. Lấy headersList (phải là await)
     const headersList = await headers();
