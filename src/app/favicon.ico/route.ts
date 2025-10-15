@@ -1,55 +1,40 @@
+import { headers } from 'next/headers'
 import { NextResponse } from "next/server";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-
-// Khởi tạo R2 client
-const r2Client = new S3Client({
-    region: "auto",
-    endpoint: `https://${process.env.ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-        accessKeyId: process.env.ACCESS_KEY_R2!,
-        secretAccessKey: process.env.SECRET_KEY_R2!,
-    },
-});
-
-export const dynamic = "force-dynamic"; // Next.js 14 App Router
 
 export async function GET() {
-    const key = "diaocdautu.com.vn/favicon.ico"; // key trong R2
+    const headersList = await headers()
+    const host = await headersList.get("host")?.replace(":3000", "") || ""
+
+    const fileUrl = `${process.env.URL_FILE_STATIC}/diaocdautu.com.vn/favicon.ico`;
 
     try {
-        const command = new GetObjectCommand({
-            Bucket: process.env.BUCKET_STATIC!,
-            Key: key,
-        });
+        const res = await fetch(fileUrl);
 
-        const response: any = await r2Client.send(command);
-
-        // Nếu không có file → trả 404
-        if (!response.Body) {
-            return new NextResponse(null, { status: 404 });
+        if (!res.ok) {
+            return new NextResponse("File not found", { status: 404 });
         }
 
-        // Chuyển Body sang ArrayBuffer
-        let arrayBuffer: ArrayBuffer;
-        if ("transformToArrayBuffer" in response.Body) {
-            arrayBuffer = await response.Body.transformToArrayBuffer();
-        } else {
-            // Fallback Node.js / Worker
-            arrayBuffer = await new Response(response.Body as any).arrayBuffer();
-        }
+        // Lấy ArrayBuffer của file
+        const arrayBuffer = await res.arrayBuffer();
 
-        // Lấy Content-Type từ metadata nếu có, fallback là image/x-icon
-        const contentType = response.ContentType || "image/x-icon";
+        // Lấy header từ response gốc
+        const contentType = res.headers.get("content-type") || "application/octet-stream";
+        const contentLength = res.headers.get("content-length") || arrayBuffer.byteLength.toString();
+        const lastModified = res.headers.get("last-modified") || "";
+        const etag = res.headers.get("etag") || "";
 
-        const headers = new Headers({
-            "Content-Type": contentType,
-            "Cache-Control": "public, immutable, max-age=2592000",
-            "Content-Length": arrayBuffer.byteLength.toString(),
+        // Trả về response với header gốc
+        return new NextResponse(arrayBuffer, {
+            status: 200,
+            headers: {
+                "Content-Type": contentType,
+                "Content-Length": contentLength,
+                "Last-Modified": lastModified,
+                "ETag": etag,
+                "Cache-Control": "public, immutable, max-age=2592000",
+            },
         });
-
-        return new NextResponse(arrayBuffer, { status: 200, headers });
     } catch (err) {
-        // Lỗi bất kỳ → trả 404
         return new NextResponse(null, { status: 404 });
     }
 }
