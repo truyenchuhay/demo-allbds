@@ -5,7 +5,7 @@ export async function GET() {
     const headersList = await headers()
     const host = await headersList.get("host")?.replace(":3000", "") || ""
 
-    const fileUrl = `${process.env.URL_FILE_STATIC}/diaocdautu.com.vn/favicon.ico`;
+    const fileUrl = `${process.env.URL_FILE_STATIC}/${host}/favicon.ico`;
 
     try {
         const res = await fetch(fileUrl);

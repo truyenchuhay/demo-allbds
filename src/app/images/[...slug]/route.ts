@@ -19,7 +19,7 @@ export async function GET(
 
     // 4. Tính toán File URL (sử dụng biến môi trường URL_FILE_STATIC)
     // Lưu ý: Đảm bảo biến môi trường này được định nghĩa khi deploy lên Edge.
-    const fileUrl = `${process.env.URL_FILE_STATIC}/diaocdautu.com.vn/images/${fullSlug}`;
+    const fileUrl = `${process.env.URL_FILE_STATIC}/${host}/images/${fullSlug}`;
 
     try {
         // Fetch ảnh từ URL gốc
